@@ -294,7 +294,7 @@ function merge<TKey extends OnyxKey>(key: TKey, changes: OnyxEntry<NullishDeep<K
     const mergeQueuePromise = OnyxUtils.getMergeQueuePromise();
 
     // Top-level undefined values are ignored
-    // Therefore we need to prevent adding them to the merge queue
+    // Therefore, we need to prevent adding them to the merge queue
     if (changes === undefined) {
         return mergeQueue[key] ? mergeQueuePromise[key] : Promise.resolve();
     }
