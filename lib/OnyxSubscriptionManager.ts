@@ -128,8 +128,6 @@ class OnyxSubscriptionManager {
         if (changedKeys.length === 0) {
             return;
         }
-        const previous = partialPreviousCollection ?? {};
-
         // Read the merged collection once. `cache.getCollectionData()` returns the post-merge
         // frozen object, which is what listeners should see (not the raw `partialCollection`
         // input, which is just the delta and lacks fields preserved during merge).
@@ -144,10 +142,13 @@ class OnyxSubscriptionManager {
         }
 
         // 2. Exact-member subscribers fire per changed key (skip if ref unchanged vs previous).
+        // Only treat a member as unchanged when `previous` actually carries it: when the
+        // previous collection is omitted, a removed member reads `undefined` on both sides
+        // and would otherwise be skipped even though it changed.
         for (const memberKey of changedKeys) {
             const value = collectionData?.[memberKey];
-            const prev = previous[memberKey];
-            if (value === prev) {
+            const prev = partialPreviousCollection?.[memberKey];
+            if (partialPreviousCollection && Object.prototype.hasOwnProperty.call(partialPreviousCollection, memberKey) && value === prev) {
                 continue;
             }
 

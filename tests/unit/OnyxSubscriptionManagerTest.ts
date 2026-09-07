@@ -111,6 +111,25 @@ describe('OnyxSubscriptionManager', () => {
         });
     });
 
+    describe('getState', () => {
+        it('should return the cached value for a single key', () => {
+            cache.set(ONYXKEYS.TEST_KEY, 'hello');
+
+            expect(onyxSubscriptionManager.getState(ONYXKEYS.TEST_KEY)).toBe('hello');
+        });
+
+        it('should return undefined for a single key that is not in the cache', () => {
+            expect(onyxSubscriptionManager.getState(ONYXKEYS.OTHER_TEST)).toBeUndefined();
+        });
+
+        it('should return the collection object for a collection key', () => {
+            const collectionData = {[MEMBER_1]: {id: 1}, [MEMBER_2]: {id: 2}};
+            jest.spyOn(cache, 'getCollectionData').mockReturnValue(collectionData);
+
+            expect(onyxSubscriptionManager.getState(COLLECTION)).toBe(collectionData);
+        });
+    });
+
     describe('collection routing on notifyKey', () => {
         it('should fire the collection-root listener with the cache collection object when a member is written', () => {
             const collectionData = {[MEMBER_1]: {id: 1}, [MEMBER_2]: {id: 2}};
@@ -201,6 +220,20 @@ describe('OnyxSubscriptionManager', () => {
 
             expect(member1Callback).toHaveBeenCalledWith({id: 1}, MEMBER_1);
             expect(member2Callback).not.toHaveBeenCalled();
+        });
+
+        it('should notify the exact-member listener when the member is deleted without a previous collection', () => {
+            // member1 has already been removed from the cache by the time notifyCollection runs.
+            jest.spyOn(cache, 'getCollectionData').mockReturnValue({[MEMBER_2]: {id: 2}});
+
+            const member1Callback = jest.fn();
+            onyxSubscriptionManager.subscribe(MEMBER_1, member1Callback);
+
+            // No partialPreviousCollection passed — a removed member reads undefined on both
+            // sides and must not be treated as unchanged.
+            onyxSubscriptionManager.notifyCollection(COLLECTION, {[MEMBER_1]: null});
+
+            expect(member1Callback).toHaveBeenCalledTimes(1);
         });
 
         it('should be a no-op when the partial collection is empty', () => {
