@@ -7,12 +7,13 @@ import OnyxKeys from './OnyxKeys';
 /**
  * Listener fired when an exact key's value changes.
  */
-type KeyListener<TKey extends OnyxKey = OnyxKey> = (value: OnyxValue<TKey>, key: TKey) => void;
+type Listener<TKey extends OnyxKey = OnyxKey> = (value: OnyxValue<TKey>, key: TKey) => void;
 
 /**
- * Storage form of a listener, value erased so one Map can hold listeners for every key type.
+ * Generic listener, without specific types for the keys or values.
+ * This way a single Map can hold listeners for every key type.
  */
-type StoredListener = (value: unknown, key: OnyxKey) => void;
+type GenericListener = (value: unknown, key: OnyxKey) => void;
 
 type NotifyKeyOptions = {
     /**
@@ -30,7 +31,7 @@ type NotifyKeyOptions = {
  *    - `notifyCollection` for batch updates to collections
  */
 class OnyxSubscriptionManager {
-    private keyListeners: Map<OnyxKey, Set<StoredListener>>;
+    private keyListeners: Map<OnyxKey, Set<GenericListener>>;
 
     constructor() {
         this.keyListeners = new Map();
@@ -54,14 +55,14 @@ class OnyxSubscriptionManager {
      *
      * Returns an unsubscribe function.
      */
-    subscribe<TKey extends OnyxKey>(key: TKey, listener: KeyListener<TKey>): () => void {
+    subscribe<TKey extends OnyxKey>(key: TKey, listener: Listener<TKey>): () => void {
         let listeners = this.keyListeners.get(key);
         if (!listeners) {
             listeners = new Set();
             this.keyListeners.set(key, listeners);
         }
 
-        listeners.add(listener as StoredListener);
+        listeners.add(listener as GenericListener);
 
         return () => {
             const set = this.keyListeners.get(key);
@@ -69,7 +70,7 @@ class OnyxSubscriptionManager {
                 return;
             }
 
-            set.delete(listener as StoredListener);
+            set.delete(listener as GenericListener);
 
             if (set.size === 0) {
                 this.keyListeners.delete(key);
@@ -199,4 +200,4 @@ class OnyxSubscriptionManager {
 const onyxSubscriptionManager = new OnyxSubscriptionManager();
 
 export default onyxSubscriptionManager;
-export type {KeyListener};
+export type {Listener};
