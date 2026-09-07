@@ -23,15 +23,13 @@ type NotifyKeyOptions = {
 };
 
 /**
- * `OnyxStore` is a single listener registry for Onyx reads/subscriptions. One index backs
- * every subscription:
- *
- *   keyListeners: exact-key listeners (a single key, a collection object,
- *                 or a specific collection member).
- *
- * Write paths call `notifyKey()` (single-key write) or `notifyCollection()` (batch collection update).
+ * OnyxSubscriptionManager is a registry for Onyx subscriptions.
+ * Subscriptions are stored in `keyListeners`, a flat map keyed by OnyxKey.
+ * Subscribers are notified on a per-key basis:
+ *    - `notifyKey` for individual keys or collection members
+ *    - `notifyCollection` for batch updates to collections
  */
-class OnyxStore {
+class OnyxSubscriptionManager {
     private keyListeners: Map<OnyxKey, Set<StoredListener>>;
 
     constructor() {
@@ -193,12 +191,12 @@ class OnyxStore {
         try {
             fn();
         } catch (error) {
-            Logger.logAlert(`[OnyxStore] Listener threw an error for key '${contextKey}': ${error}`);
+            Logger.logAlert(`[OnyxSubscriptionManager] Listener threw an error for key '${contextKey}': ${error}`);
         }
     }
 }
 
-const onyxStore = new OnyxStore();
+const onyxSubscriptionManager = new OnyxSubscriptionManager();
 
-export default onyxStore;
+export default onyxSubscriptionManager;
 export type {KeyListener};
