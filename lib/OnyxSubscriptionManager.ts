@@ -15,14 +15,6 @@ type Listener<TKey extends OnyxKey = OnyxKey> = (value: OnyxValue<TKey>, key: TK
  */
 type GenericListener = (value: unknown, key: OnyxKey) => void;
 
-type NotifyKeyOptions = {
-    /**
-     * Skips collection-level routing. Collection-batch write paths set it so each member write
-     * doesn't re-trigger the collection-level listeners; the outer `notifyCollection()` fires those once.
-     */
-    suppressCollectionNotify?: boolean;
-};
-
 /**
  * OnyxSubscriptionManager is a registry for Onyx subscriptions.
  * Subscriptions are stored in `keyListeners`, a flat map keyed by OnyxKey.
@@ -84,9 +76,9 @@ class OnyxSubscriptionManager {
      * Dispatch:
      *   1. keyListeners.get(key): exact-key subscribers (always fires).
      *   2. If key is a collection member, keyListeners.get(collectionKey): collection
-     *      listeners for the parent collection (unless `options.suppressCollectionNotify`).
+     *      listeners for the parent collection.
      */
-    notifyKey<TKey extends OnyxKey>(key: TKey, value: OnyxValue<TKey>, options?: NotifyKeyOptions): void {
+    notifyKey<TKey extends OnyxKey>(key: TKey, value: OnyxValue<TKey>): void {
         // 1. Exact-key listeners
         const exact = this.keyListeners.get(key);
         if (exact && exact.size > 0) {
@@ -100,7 +92,7 @@ class OnyxSubscriptionManager {
         // unsupported anti-pattern; treat them as opaque single-key writes.
         const collectionKey = OnyxKeys.getCollectionKey(key);
         const isCollectionMemberWrite = collectionKey !== undefined && collectionKey !== key;
-        if (isCollectionMemberWrite && !options?.suppressCollectionNotify) {
+        if (isCollectionMemberWrite) {
             const collectionListeners = this.keyListeners.get(collectionKey);
             if (collectionListeners && collectionListeners.size > 0) {
                 const collectionData = cache.getCollectionData(collectionKey);

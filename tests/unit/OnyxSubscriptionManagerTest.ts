@@ -160,22 +160,6 @@ describe('OnyxSubscriptionManager', () => {
             expect(collectionCallback).toHaveBeenCalledWith(collectionData, COLLECTION);
         });
 
-        it('should skip the collection-root listener but still fire the exact-member listener when suppressCollectionNotify is set', () => {
-            const getCollectionData = jest.spyOn(cache, 'getCollectionData').mockReturnValue({});
-
-            const memberCallback = jest.fn();
-            const collectionCallback = jest.fn();
-            onyxSubscriptionManager.subscribe(MEMBER_1, memberCallback);
-            onyxSubscriptionManager.subscribe(COLLECTION, collectionCallback);
-
-            onyxSubscriptionManager.notifyKey(MEMBER_1, {id: 1}, {suppressCollectionNotify: true});
-
-            expect(memberCallback).toHaveBeenCalledTimes(1);
-            expect(collectionCallback).not.toHaveBeenCalled();
-            // The collection object is never read when suppressed.
-            expect(getCollectionData).not.toHaveBeenCalled();
-        });
-
         it('should not perform collection routing for a non-member single key', () => {
             const getCollectionData = jest.spyOn(cache, 'getCollectionData');
             const callback = jest.fn();
